@@ -1,83 +1,149 @@
-import { useRef, useState, useEffect } from 'react';
+import { useContext, useRef, useState, useMemo, memo } from 'react';
+import { ChromePicker } from 'react-color';
+import { useNavigate } from 'react-router-dom'
+import { useSpring, animated } from '@react-spring/web'
 
-import * as utils from './Util';
+import { BubbleContext } from './App';
+import * as utils from './Util'; 
 
-function BubbleOptions(i, winWidth, winHeight) {
-    let size = utils.randomNumber((((winWidth + winHeight) / 2) * 0.05), (((winWidth + winHeight) / 2) * 0.25));
+import reloadIcon from './assets/refresh.png';
+import pickerIcon from './assets/color-picker.png';
+import hideIcon from './assets/hide.png';
 
-    let top = utils.randomNumber(0, (winHeight - size));
-    let left = utils.randomNumber(0, (winWidth - size));
+export const BubbleCanvas = (props) => {
+    // eslint-disable-next-line
+    const { colorObj, setColor, quantity } = useContext(BubbleContext);
+    const navigate = useNavigate();
+    const [colorPicker, setPicker] = useState(false);
 
-    let maxTop = winHeight - size;
-    let maxLeft = winWidth - size;
-
-    return {
-        ref: useRef(null),
-        index: i,
-        item: 'bubbles-item-' + (i + 1),
-        size: size,
-        opacity: (utils.randomNumber(2, 10) / 10),
-        brightness: utils.randomNumber(50, 90),
-        top: {
-            value: top,
-            max: maxTop,
-            duration: utils.randomNumber(4000, 10000),
-            first: false,
-            hit: false
-        },
-        left: {
-            value: left,
-            max: maxLeft,
-            duration: utils.randomNumber(4000, 10000),
-            first: false,
-            hit: false
-        }
-    };
-}
-
-export const Bubble = (props) => {
     return (
-        <div
-            id={props.options.item}
-            className={'bubbles-item ' + props.options.item}
-            ref={props.options.ref} style={{
-                opacity: props.options.opacity,
-                transition: "top " + props.options.top.duration + "ms, left " + props.options.left.duration + "ms",
-                filter: "brightness(" + props.options.brightness + "%)",
-                width: props.options.size,
-                height: props.options.size,
-                top: props.options.top.value,
-                left: props.options.left.value,
-                zIndex: props.options.index
-            }}>
+        <div style={{ backgroundColor: colorObj.colorFull }} className="bubbles">
+            <div style={{ backgroundColor: colorObj.colorFull }} className={'bubbles-control ' + colorObj.colorBlack}>
+                <div className='bubbles-control-wrapper'>
+                    
+                    <div className={'bubbles-control-color' + (colorPicker ? ' open' : '')}>
+                        <ChromePicker disableAlpha={true} color={colorObj.colorFull} onChange={(newColor) => {
+                            setColor({
+                                color: newColor.hex.replace('#', '').toUpperCase(),
+                                colorFull: newColor.hex.toUpperCase(),
+                                colorDark: utils.isColorDark(newColor.hex.toUpperCase()),
+                                colorBlack: utils.isColorBlack(newColor.hex.toUpperCase())
+                            });
+
+                            navigate('/' + newColor.hex.replace('#', '').toUpperCase());
+                        }} />
+                    </div>
+
+                    <ul className='bubbles-control-options'>
+                        <li>
+                            <span className={colorObj.colorDark}>{colorObj.colorFull}</span>
+                        </li>
+                        <li><img className={colorObj.colorDark} alt='Reaload' src={reloadIcon} /></li>
+                        <li><img className={colorObj.colorDark} onClick={() => setPicker(!colorPicker)} alt='Color Picker' src={pickerIcon} /></li>
+                        <li><img className={colorObj.colorDark} alt='Hide Bubble' src={hideIcon} /></li>
+                    </ul>
+
+                </div>
+            </div>
+            <div className='bubbles-items-wrapper'>
+                <BubblesConstruct quantity={quantity} />
+            </div>
         </div>
-    )
+    );    
 }
 
-export const RenderBubbles = (props) => {
-    let bubblesReturn = [];
-    let [bubbles, changeBubble] = useState([]);
-    let [winHeight, updateWinHeight] = useState(window.innerHeight);
-    let [winWidth, updateWinWidth] = useState(window.innerWidth);
-    let newItens = [];
+export const Bubble = memo((props) => {
+    const { colorObj, winHeight, winWidth } = useContext(BubbleContext);
+    let size = useMemo(() => utils.randomNumber((winWidth * 0.10), (winWidth * 0.25)), [winWidth]);
+    let opacity = useMemo(() => (utils.randomNumber(2, 8) / 10), []);
+    let brightness = useMemo(() => utils.randomNumber(50, 90), []);
+    
+    let top = useMemo(() => utils.randomNumber(0, (winHeight - size)), [winHeight, size]);
+    let topMax = useMemo(() => winHeight - size, [winHeight, size]);
+    let topTransition = useMemo(() => utils.randomNumber(2500, 10000), []);
+    
+    let left = useMemo(() => utils.randomNumber(0, (winWidth - size)), [winWidth, size]);
+    let leftMax = useMemo(() => winWidth - size, [winWidth, size]);
+    let leftTransition = useMemo(() => utils.randomNumber(2500, 10000), []);
 
-    window.addEventListener('resize', () => {
-        updateWinHeight(window.innerHeight);
-        updateWinWidth(window.innerWidth);
-    });
+    // eslint-disable-next-line
+    let [topAnimation, topAnimationUpdate] = useSpring(() => ({
+        from: { top: 0 },
+        to: { top: topMax },
+        config: {
+            duration: topTransition
+        },
+        loop: {
+            reverse: true,
+        }
+    }));
 
-    for (let i = 0; i < props.num; i++) {
-        newItens[i] = BubbleOptions(i, winWidth, winHeight);
+    // eslint-disable-next-line
+    let [leftAnimation, leftAnimationUpdate] = useSpring(() => ({
+        from: { left: 0  },
+        to: { left: leftMax },
+        config: { 
+            duration: leftTransition
+        },
+        loop: {
+            reverse: true,
+        }
+    }));
+
+    // setTimeout(() => {
+    //     topAnimationUpdate({
+    //         from: { top: topMax },
+    //         to: { top: 0 },
+    //         config: {
+    //             duration: topTransition
+    //         },
+    //         loop: {
+    //             reverse: true,
+    //         }
+    //     });
+    // }, topTransition);
+
+    // setTimeout(() => {
+    //     leftAnimationUpdate({
+    //         from: { left: leftMax },
+    //         to: { left: 0 },
+    //         config: {
+    //             duration: leftTransition
+    //         },
+    //         loop: {
+    //             reverse: true,
+    //         }
+    //     });
+    // }, leftTransition);
+
+    return (
+        <animated.div
+            id={'bubbles-item-' + (props.index + 1)}
+            ref={useRef(null)}
+            className={'bubbles-item bubbles-item-' + (props.index + 1) + ' ' + colorObj.colorBlack}
+            style={{
+                backgroundColor: colorObj.colorFull,
+                opacity: opacity,
+                filter: "brightness(" + brightness + "%)",
+                zIndex: (props.index + 1),
+                width: size,
+                height: size,
+                top: top,
+                left: left,
+                ...topAnimation,
+                ...leftAnimation
+            }}
+        ></animated.div>
+    )
+})
+
+export const BubblesConstruct = (props) => {
+    const { quantity } = useContext(BubbleContext);
+    const bubblesConstruct = [];
+
+    for (let i = 0; i < (props.quantity ?? quantity ); i++) {
+        bubblesConstruct.push(<Bubble index={i} key={i} />);
     }
-
-    console.log(newItens);
-
-    changeBubble((oldValue) => [...oldValue, newItens]);
-
-
-    for (let i = 0; i < props.num; i++) {
-        bubblesReturn.push(<Bubble index={utils.randomNumber(10, 20)} options={newItens[i]} />)
-    }
-
-    return bubblesReturn;
+    
+    return (bubblesConstruct);
 }

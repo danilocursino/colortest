@@ -3,8 +3,62 @@
   width: 100vw;
   height: 100vh;
 
-  .slider-picker {
-    // display: none;
+  &-control-color {
+    transition: opacity 0.25s;
+    position: absolute;
+    top: -35%;
+    left: 50%;
+    width: 100% !important;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 101;
+    
+    &.open {
+        pointer-events: auto;
+        opacity: 1;
+      }
+
+    .chrome-picker {
+      margin: 0 auto;
+      width: 100% !important;
+      position: relative;
+      // height: 100%;
+      
+      &:before {
+          content: "";
+          border-style: solid;
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border-top: 10px solid #FFF;
+          border-bottom: 10px solid transparent;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+        }
+
+      > div {
+        > .flexbox-fix:nth-child(1) {
+          > div:nth-child(1) {
+            display: none !important;
+          }
+        }
+
+        > .flexbox-fix:nth-child(2) {
+          display: none !important;
+        }
+
+        &:nth-child(2) {
+          padding: 3.5% !important;
+        }
+      }
+    }
+  }
+  
+  .bubbles-items-wrapper {
+    width: 100vw;
+    height: 100vh;
   }
 
   &-item {
@@ -12,6 +66,10 @@
     border-radius: 100%;
     background-color: #000;
     box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+
+    &.black {
+      box-shadow: 0px 0px 30px 10px rgba(255, 255, 255, 0.25);
+    }
   }
 
   &-control {
@@ -27,6 +85,10 @@
     left: 50%;
     width: 20%;
     z-index: 100;
+    
+    &.black {
+      box-shadow: 0px 0px 30px 5px rgba(255, 255, 255, 0.25);
+    }
 
     &-wrapper {
       position: relative;
@@ -57,12 +119,24 @@
         }
 
         span {
+          transition: color 0.25s;
           font: 2em sans-serif;
           font-weight: bold;
+
+          &.dark {
+            color: #FFF;
+          }
+
+          &.light {color: #000;
+          }
         }
 
         img {
           width: 30px;
+
+          &.dark {
+            filter: brightness(0) invert(1);
+          }
         }
       }
     }
